@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{%block title %}
+Редактирование задач
+{% endblock %}
+
+{%block body %}
+<table border="1"><tr>
+                    <th> ID </th> 
+                    <th> Название </th>
+                    <th> Описание </th>
+                    <th> Статус </th>
+                    <th> Дата создания </th>
+                </tr>
+                <td> {{task.id}}  </td> 
+                <td> {{task.title}} </td> 
+                <td> {{task.desc}} </td> 
+                <td> {{task.status}} </td> 
+                <td> {{task.created_at}} </td>
+                </table>
+            <form method= "post" class = "form-control"> 
+            <input type="text" name="title" value="{{task.title}}" class = "form-control"><br>
+            <input type="text" name="description" value="{{task.desc}}" class = "form-control"><br>
+            <input type="text" name="status" value="{{task.status}}" class = "form-control"><br>
+            <button type="submit"> Сохранить </button>
+            </form> 
+            <a href="/todos"> <h3> Назад </h3> </a>
+{% endblock %}

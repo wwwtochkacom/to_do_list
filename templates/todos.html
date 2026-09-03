@@ -1,0 +1,64 @@
+{% extends 'base.html' %} {%block title %} Список задач {% endblock %} {% block
+body %}
+<h1>Список задач</h1>
+<form action="/todos" method="GET">
+<div>
+    <input type="radio" name="status" value="Complete"/>
+    <label for="status">Complete</label>
+  </div>
+<div>
+    <input type="radio" name="status" value="Not complete"/>
+    <label for="status">Not complete</label>
+  </div>
+<select name="sort">
+  <option value="dateplus">По дате по возрастанию</option>
+  <option value="dateminus">По дате по убыванию</option>
+</select>
+
+<button type="submit">Применить фильтр</button>
+</form>
+ <br/>
+<table border="3">
+  <tr>
+    <th>ID</th>
+    <th>Название</th>
+    <th>Описание</th>
+    <th>Статус</th>
+    <th>Дата создания</th>
+  </tr>
+  {% for task in html_pag %}
+  <tr>
+    <td>{{task["id"]}}</td>
+    <td>{{task["title"]}}</td>
+    <td>{{task["description"]}}</td>
+    <td>{{task["status"]}}</td>
+    <td>{{task["date"]}}</td>
+    <td><a href="/todos/{{ task['id'] }}/edit"> Редактировать</a></td>
+    <td>
+        <button onclick="deleteTask({{ task['id'] }})">Удалить</button> 
+    </td>
+  </tr>
+  {% endfor %}
+   
+</table>
+{% if filter_active  %}
+  <a href="{{ url_for('hello_world') }}"> <h3>Сбросить фильтры</h3></a>
+{% endif %} 
+
+<a href="/todos/create"> <h3>Создать задачу</h3></a>
+<nav class="pagination-container" aria-label="Постраничная навигация">
+  
+  {% if page < dlina  %}
+  <a href="{{ url_for('hello_world', page=page + 1, sort = sort, status = status) }}"> <h3>Вперед →</h3></a>  
+  {% endif %}
+  {% for i in range(1, dlina + 1) %}
+    <a href="{{ url_for('hello_world', page = i, sort = sort, status = status)}}"><h4>{{i}}</h4></a>
+
+
+  {% endfor %}
+  {% if page > 1  %}
+  <a href="{{ url_for( 'hello_world', page=page - 1, sort = sort, status = status)}}"> <h3> ← Назад</h3></a>
+  {% endif %} 
+</nav>
+
+{% endblock %}

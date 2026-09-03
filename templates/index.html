@@ -1,0 +1,65 @@
+@app.route("/todos", methods = ['GET', "POST"])
+def hello_world():
+    rows_html = []
+    status = request.args.get("status")
+    sort = request.args.get("sort")
+    if (status and sort) is None:
+        filter_active  = False
+        if task_manager.tasks:
+            for task in task_manager.tasks:
+                rows_html.append(task.to_dict())
+                html_list = rows_html
+            # print(rows_html)
+            return render_template("todos.html", html_list=html_list)
+        else:
+            return """
+            <a href="/todos/create/"><h1> Создать задачу </h1></a> 
+            <h1> Список пуст </h1>"""
+    elif status is not None and sort is None:
+        filter_active  = True
+        example = task_manager.filter_done(status)
+        if example == []:
+            return "<h2> Решенных задач нет </h2>"
+        else:
+            html_list = example
+            return render_template("todos.html", html_list=html_list, filter_active = filter_active)
+    elif status is None and sort is not None:
+        example = task_manager.sort_task(sort)
+        filter_active  = True
+        if example == []:
+            return "<h2> Решенных задач нет </h2>"
+        else:
+            html_list = example
+            return render_template("todos.html", html_list=html_list, filter_active = filter_active)
+
+    elif (status and sort) is not None:
+        filter_active  = True
+        example = task_manager.filter_done(status)
+        html_list = sorted_list(example)
+        return render_template("todos.html", html_list=html_list, filter_active = filter_active)
+
+
+def filter_done(self, parametr):
+        seq = []
+        for t in self.tasks:
+            if t.status == parametr:
+                seq.append(t.to_dict())
+
+        if seq != []:
+            return seq
+
+        else:
+            return []
+
+    def sort_task(self, parametr):
+        seq = []
+        if parametr == "date":
+            for t in self.tasks:
+                seq.append(t.to_dict())
+            seq.sort(key=lambda x: x["date"])
+            return seq
+
+
+def sorted_list( list):
+    list.sort(key=lambda x: x["date"])
+    return list
