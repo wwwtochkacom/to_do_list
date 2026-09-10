@@ -1,6 +1,8 @@
 import datetime
-from storage import jsontasks, save_tasks
 import secrets
+
+from storage import save_tasks
+
 
 class Task:
     def __init__(self, title, desc, status, created_at, task_id=None):
@@ -86,26 +88,28 @@ class Manager:
         for t in self.tasks:
             if t.status == parametr:
                 seq.append(t.to_dict())
-        
+
         return seq
+
 
 def sorted_list(items: list, parametr: str) -> list:
     if items is None:
         return []  # Защита от None на входе
-    
+
     if parametr == "dateplus":
         items.sort(key=lambda x: x["date"])
         return items
-    elif parametr == 'dateminus':
+    elif parametr == "dateminus":
         items.sort(key=lambda x: x["date"], reverse=True)
         return items
     return items
 
- # def sort_task(self, parametr):
-    #     seq = list(self.tasks)
-    #     if parametr == "dateplus":
-    #         seq.sort(key=lambda x: x.created_at)
-    #         return seq
-    #     elif parametr == 'dateminus':
-    #         seq.sort(key=lambda x: x.created_at, reverse=True)
-    #         return seq
+
+# def sort_task(self, parametr):
+#     seq = list(self.tasks)
+#     if parametr == "dateplus":
+#         seq.sort(key=lambda x: x.created_at)
+#         return seq
+#     elif parametr == 'dateminus':
+#         seq.sort(key=lambda x: x.created_at, reverse=True)
+#         return seq

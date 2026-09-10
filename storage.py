@@ -1,20 +1,20 @@
-import sqlite3
 import json
 import os
+import sqlite3
+
 from config import JSON_PATH
 
-connection = sqlite3.connect("data/todo.db")
+connection = sqlite3.connect("data/tasks.db")
 cursor = connection.cursor()
-# cursor.execute('''CREATE TABLE tasks (
-#     task_id integer,
-#     title text,
-#     description text,
-#     status text,
-#     date DATE
-#     )''')
-# cursor.execute("INSERT INTO tasks VALUES (9460, 'qwsad', 'asdasd', 'Complete', '2026-08-19')")
-cursor.execute("SELECT rowid, title FROM tasks")
-print(cursor.fetchall())
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS  tasks (
+    id INTEGER PRIMARY KEY,
+    title TEXT ,
+    description TEXT,
+    status BOOLEAN DEFAULT FALSE, 
+    date DATE NOT NULL
+)
+""")
 
 connection.commit()
 connection.close()

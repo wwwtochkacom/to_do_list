@@ -8,16 +8,17 @@ def validate_patch(data: dict) -> str | None:
                 return None
         else:
             return None
-    return 'Успешно'
+    return "Успешно"
+
 
 def validate_put(data: dict):
     mapping = ["title", "description", "status", "date"]
     if set(data.keys()) == set(mapping):
         for key, value in data.items():
             if isinstance(value, str):
-                 continue
+                continue
             else:
                 return None
-        return 'Успешно'
+        return "Успешно"
     else:
         return None

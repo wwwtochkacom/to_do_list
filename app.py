@@ -1,9 +1,11 @@
-from flask import Flask, request, url_for, redirect, render_template
-from task import Manager, sorted_list
-from storage import jsontasks
-from validators import validate_patch, validate_put
-from config import PORT, DEBUG
 import math
+
+from flask import Flask, redirect, render_template, request, url_for
+
+from config import DEBUG, PORT
+from storage import jsontasks
+from task import Manager, sorted_list
+from validators import validate_patch, validate_put
 
 task_manager = Manager(jsontasks)
 
@@ -20,7 +22,7 @@ def hello_world():
     filter_active = False
     status = request.args.get("status")
     sort = request.args.get("sort")
-    
+
     html_list = [el.to_dict() for el in task_manager.tasks]
 
     if html_list:
@@ -39,13 +41,13 @@ def hello_world():
         dlina = math.ceil(len(html_list) / limit)
         return render_template(
             "todos.html",
-            html_pag=html_pag,
-            dlina=dlina,
-            filter_active=filter_active,
-            page=page,
-            limit=limit,
-            status=status,
-            sort=sort,
+            html_pag = html_pag,
+            dlina = dlina,
+            filter_active = filter_active,
+            page = page,
+            limit = limit,
+            status = status,
+            sort = sort,
         )
 
     else:
