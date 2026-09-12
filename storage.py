@@ -1,38 +1,48 @@
-import json
 import os
 import sqlite3
 
 from config import JSON_PATH
 
-connection = sqlite3.connect("data/tasks.db")
-cursor = connection.cursor()
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS  tasks (
-    id INTEGER PRIMARY KEY,
-    title TEXT ,
-    description TEXT,
-    status BOOLEAN DEFAULT FALSE, 
-    date DATE NOT NULL
-)
-""")
+with sqlite3.connect("data/tasks.db") as connection:
+    cursor = connection.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS  tasks (
+        id INTEGER PRIMARY KEY,
+        title TEXT ,
+        description TEXT,
+        status TEXT, 
+        date DATE NOT NULL
+    )
+    """)
 
-connection.commit()
-connection.close()
 
 
 def save_tasks(tasks_data):
-    with open(JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(tasks_data, f, indent=4, ensure_ascii=False)
+    # print(tasks_data, len(tasks_data)) 
+    with sqlite3.connect("data/tasks.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            '''INSERT INTO tasks (id, title, description, status, date)
+                VALUES (?, ?, ?, ?, ?)''',
+                tasks_data[-1],
+                )
 
 
-def load_json_file():
+def load_tasks():
     if (
-        os.path.exists(JSON_PATH) and os.path.getsize("data/todos.json") > 0
+        os.path.exists("data/tasks.db") and os.path.getsize("data/tasks.db") > 0
     ):  # Проверка на наличие файла и его размер
-        with open(JSON_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with sqlite3.connect("data/tasks.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute('''SELECT id, title, description, status, date FROM tasks''')
+            return cursor.fetchall()
     else:
         return []
 
+def render_page():
+    with sqlite3.connect("data/tasks.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM tasks")
+        return cursor.fetchall()
 
-jsontasks = load_json_file()
+dbtasks = load_tasks()

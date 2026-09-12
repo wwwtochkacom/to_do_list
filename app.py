@@ -1,15 +1,14 @@
 import math
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request
 
 from config import DEBUG, PORT
-from storage import jsontasks
-from task import Manager, sorted_list
+from storage import render_page
+from task import Manager, Task, sorted_list
 from validators import validate_patch, validate_put
 
-task_manager = Manager(jsontasks)
-
 app = Flask(__name__)
+task_manager = Manager(render_page())
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -18,7 +17,9 @@ def hello():
 
 
 @app.route("/todos", methods=["GET", "POST"])
-def hello_world():
+def render():
+    global task_manager
+    task_manager = Manager(render_page())
     filter_active = False
     status = request.args.get("status")
     sort = request.args.get("sort")
@@ -41,13 +42,13 @@ def hello_world():
         dlina = math.ceil(len(html_list) / limit)
         return render_template(
             "todos.html",
-            html_pag = html_pag,
-            dlina = dlina,
-            filter_active = filter_active,
-            page = page,
-            limit = limit,
-            status = status,
-            sort = sort,
+            html_pag=html_pag,
+            dlina=dlina,
+            filter_active=filter_active,
+            page=page,
+            limit=limit,
+            status=status,
+            sort=sort,
         )
 
     else:
@@ -70,11 +71,15 @@ def add_task():
 @app.route("/todos/<int:task_id>/edit", methods=["GET", "POST"])
 def update_task(task_id):
     task = task_manager.find_task(task_id)
+    task = Task(
+        task["title"], task["description"], task["status"], task["date"], task["id"]
+    )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404
 
     else:
         if request.method == "GET":
+
             return render_template("edit.html", task=task)
         else:
             data = {
@@ -82,16 +87,22 @@ def update_task(task_id):
                 "description": request.form["description"],
                 "status": request.form["status"],
             }
-
-            task.full_change_task(data["title"], data["description"], data["status"])
-            task_manager.save()
+            task.full_change_task(
+                data["title"], data["description"], data["status"], task_id
+            )
             return redirect("/todos")
 
 
-# JSON API интерфейс
+# API интерфейс
+
+
+# Полное редактирование задачи
 @app.route("/todos/<int:task_id>", methods=["PUT"])
 def api_put_task(task_id):
     task = task_manager.find_task(task_id)
+    task = Task(
+        task["title"], task["description"], task["status"], task["date"], task["id"]
+    )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404
     else:
@@ -99,15 +110,19 @@ def api_put_task(task_id):
         if validate_put(data) is None:
             return "<h2> Не правильный ввод данных </h2>", 404
         else:
-            task.full_change_task(data["title"], data["description"], data["status"])
-            task_manager.save()
+            task.full_change_task(
+                data["title"], data["description"], data["status"], task_id
+            )
             return task.to_dict()
 
 
-# JSON API интерфейс
+# Частичное редактирование задачи
 @app.route("/todos/<int:task_id>", methods=["PATCH"])
 def api_patch_task(task_id):
     task = task_manager.find_task(task_id)
+    task = Task(
+        task["title"], task["description"], task["status"], task["date"], task["id"]
+    )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404
     else:
@@ -115,11 +130,11 @@ def api_patch_task(task_id):
         if validate_patch(data) is None:
             return "<h2> Не правильный ввод данных </h2>", 404
         else:
-            task.part_change_task(data)
-            task_manager.save()
+            task.part_change_task(data, task_id)
             return task.to_dict()
 
 
+# Удаление задачи
 @app.route("/todos/<int:task_id>/delete", methods=["POST", "DELETE"])
 def delete_task(task_id):
     if task_manager.delete_task(task_id) is False:

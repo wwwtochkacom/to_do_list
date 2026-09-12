@@ -39,25 +39,25 @@ body %}
     </td>
   </tr>
   {% endfor %}
-   
+
 </table>
 {% if filter_active  %}
-  <a href="{{ url_for('hello_world') }}"> <h3>Сбросить фильтры</h3></a>
+  <a href="{{ url_for('render') }}"> <h3>Сбросить фильтры</h3></a>
 {% endif %} 
 
 <a href="/todos/create"> <h3>Создать задачу</h3></a>
 <nav class="pagination-container" aria-label="Постраничная навигация">
   
   {% if page < dlina  %}
-  <a href="{{ url_for('hello_world', page=page + 1, sort = sort, status = status) }}"> <h3>Вперед →</h3></a>  
+  <a href="{{ url_for('render', page=page + 1, sort = sort, status = status) }}"> <h3>Вперед →</h3></a>  
   {% endif %}
   {% for i in range(1, dlina + 1) %}
-    <a href="{{ url_for('hello_world', page = i, sort = sort, status = status)}}"><h4>{{i}}</h4></a>
+    <a href="{{ url_for('render', page = i, sort = sort, status = status)}}"><h4>{{i}}</h4></a>
 
 
   {% endfor %}
   {% if page > 1  %}
-  <a href="{{ url_for( 'hello_world', page=page - 1, sort = sort, status = status)}}"> <h3> ← Назад</h3></a>
+  <a href="{{ url_for( 'render', page=page - 1, sort = sort, status = status)}}"> <h3> ← Назад</h3></a>
   {% endif %} 
 </nav>
 
