@@ -1,7 +1,7 @@
 import json
 import sqlite3
 
-from config import JSON_PATH
+from config import DB_PATH, JSON_PATH
 
 
 # Миграция данных из JSON файла в DB
@@ -13,7 +13,7 @@ def migrate_json_to_db():
     for m in j:
         x.append(list(m.values()))
 
-    connection = sqlite3.connect("data/tasks.db")
+    connection = sqlite3.connect(DB_PATH)
     cursor = connection.cursor()
 
     for i in range(len(x)):

@@ -32,7 +32,7 @@ body %}
     <td>{{task["title"]}}</td>
     <td>{{task["description"]}}</td>
     <td>{{task["status"]}}</td>
-    <td>{{task["date"]}}</td>
+    <td>{{task["created_at"]}}</td>
     <td><a href="/todos/{{ task['id'] }}/edit"> Редактировать</a></td>
     <td>
         <button onclick="deleteTask({{ task['id'] }})">Удалить</button> 
@@ -48,7 +48,7 @@ body %}
 <a href="/todos/create"> <h3>Создать задачу</h3></a>
 <nav class="pagination-container" aria-label="Постраничная навигация">
   
-  {% if page < dlina  %}
+  {% if page < dlina  %} 
   <a href="{{ url_for('render', page=page + 1, sort = sort, status = status) }}"> <h3>Вперед →</h3></a>  
   {% endif %}
   {% for i in range(1, dlina + 1) %}

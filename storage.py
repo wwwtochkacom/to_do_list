@@ -1,48 +1,59 @@
 import os
-import sqlite3
+from datetime import date
+from typing import Optional
 
-from config import JSON_PATH
+from sqlalchemy import Date, String, create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-with sqlite3.connect("data/tasks.db") as connection:
-    cursor = connection.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS  tasks (
-        id INTEGER PRIMARY KEY,
-        title TEXT ,
-        description TEXT,
-        status TEXT, 
-        date DATE NOT NULL
-    )
-    """)
+from config import DB_PATH
 
 
+class Base(DeclarativeBase):
+    pass
 
-def save_tasks(tasks_data):
-    # print(tasks_data, len(tasks_data)) 
-    with sqlite3.connect("data/tasks.db") as connection:
-        cursor = connection.cursor()
-        cursor.execute(
-            '''INSERT INTO tasks (id, title, description, status, date)
-                VALUES (?, ?, ?, ?, ?)''',
-                tasks_data[-1],
-                )
+
+class TaskBase(Base):
+    __tablename__ = "tasks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(30))
+    description: Mapped[Optional[str]] = mapped_column(String(60))
+    status: Mapped[str] = mapped_column(String(15), default="Not complete")
+    created_at: Mapped[date] = mapped_column(Date, default=date.today)
+
+    def toDict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "status": self.status,
+            "created_at": self.created_at,
+        }
+
+
+DB_URL = "sqlite:///data/tasks.db"
+engine = create_engine(DB_URL, echo=True)
+Base.metadata.create_all(engine)
 
 
 def load_tasks():
     if (
-        os.path.exists("data/tasks.db") and os.path.getsize("data/tasks.db") > 0
+        os.path.exists(DB_PATH) and os.path.getsize(DB_PATH) > 0
     ):  # Проверка на наличие файла и его размер
-        with sqlite3.connect("data/tasks.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute('''SELECT id, title, description, status, date FROM tasks''')
-            return cursor.fetchall()
+        with Session(engine) as session:
+            stmt = select(TaskBase)
+            tasks = session.execute(stmt).scalars().all()
+            return tasks
     else:
         return []
 
+
 def render_page():
-    with sqlite3.connect("data/tasks.db") as connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM tasks")
-        return cursor.fetchall()
+    with Session(engine) as session:
+        stmt = select(TaskBase)
+        tasks = session.execute(stmt).scalars().all()
+        # print(tasks)
+        return tasks
+
 
 dbtasks = load_tasks()

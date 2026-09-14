@@ -8,6 +8,7 @@ from task import Manager, Task, sorted_list
 from validators import validate_patch, validate_put
 
 app = Flask(__name__)
+
 task_manager = Manager(render_page())
 
 
@@ -18,13 +19,13 @@ def hello():
 
 @app.route("/todos", methods=["GET", "POST"])
 def render():
-    global task_manager
-    task_manager = Manager(render_page())
+    tasks = render_page()
+    task_manager = Manager(tasks)
     filter_active = False
     status = request.args.get("status")
     sort = request.args.get("sort")
 
-    html_list = [el.to_dict() for el in task_manager.tasks]
+    html_list = [el.toDict() for el in tasks]
 
     if html_list:
         if status:
@@ -72,7 +73,11 @@ def add_task():
 def update_task(task_id):
     task = task_manager.find_task(task_id)
     task = Task(
-        task["title"], task["description"], task["status"], task["date"], task["id"]
+        task["title"],
+        task["description"],
+        task["status"],
+        task["created_at"],
+        task["id"],
     )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404
@@ -101,7 +106,11 @@ def update_task(task_id):
 def api_put_task(task_id):
     task = task_manager.find_task(task_id)
     task = Task(
-        task["title"], task["description"], task["status"], task["date"], task["id"]
+        task["title"],
+        task["description"],
+        task["status"],
+        task["created_at"],
+        task["id"],
     )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404
@@ -121,7 +130,11 @@ def api_put_task(task_id):
 def api_patch_task(task_id):
     task = task_manager.find_task(task_id)
     task = Task(
-        task["title"], task["description"], task["status"], task["date"], task["id"]
+        task["title"],
+        task["description"],
+        task["status"],
+        task["created_at"],
+        task["id"],
     )
     if task is None:
         return "<h2> Не найдена задача </h2>", 404

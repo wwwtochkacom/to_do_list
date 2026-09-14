@@ -1,8 +1,9 @@
-import datetime
 import secrets
-import sqlite3
 
-from storage import save_tasks
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from storage import TaskBase, engine
 
 
 class Task:
@@ -19,50 +20,43 @@ class Task:
             "title": self.title,
             "description": self.desc,
             "status": self.status,
-            "date": self.created_at,
+            "created_at": self.created_at,
         }
 
     @classmethod
     def from_dict(cls, data):
         return cls(
-            task_id=data[0],
-            title=data[1],
-            desc=data[2],
-            status=data[3],
-            created_at=data[4],
+            task_id=TaskBase.id,
+            title=TaskBase.title,
+            desc=TaskBase.description,
+            status=TaskBase.status,
+            created_at=TaskBase.created_at,
         )
 
     def full_change_task(self, title, desc, status, task_id):
-        with sqlite3.connect("data/tasks.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute(
-                """UPDATE tasks
-                SET title = ?, description = ?, status = ?
-                WHERE id = (?)""",
-                (title, desc, status, task_id),
-            )
-            connection.commit()
-            return
+        with Session(engine) as session:
+            task = session.get(TaskBase, task_id)
+
+            if task is None:
+                return
+
+            task.title, task.description, task.status = title, desc, status
+            session.commit()
 
     def part_change_task(self, data, task_id):
-        mapping = {
-            "title": "title",
-            "description": "desc",
-            "status": "status",
-            "date": "created_at",
-        }
-        for key, values in data.items():
-            if key in mapping:
-                setattr(self, mapping[key], values)
-            
-            with sqlite3.connect("data/tasks.db") as connection:
-                cursor = connection.cursor()
-                cursor.execute(
-                    f"""UPDATE tasks
-                    SET {key} = ?
-                    WHERE id = (?)""",
-                    (values, task_id),
-                )
+        with Session(engine) as session:
+            mapping = {
+                "title": "title",
+                "description": "description",
+                "status": "status",
+                "created_at": "created_at",
+            }
+            task = session.get(TaskBase, task_id)
+            for key, values in data.items():
+                if key in mapping:
+                    setattr(task, mapping[key], values)
+                    setattr(self, mapping[key], values)
+            session.commit()
         return self
 
 
@@ -71,45 +65,27 @@ class Manager:
         self.dbtasks = dbtasks
         self.tasks = [Task.from_dict(el) for el in dbtasks]
 
-    def save(self):
-        update = [i.to_dict() for i in self.tasks]
-        self.dbtasks[:] = update
-        save_tasks(self.dbtasks)
-
     def add_task(self, title, desc):
-        status = "Not complete"
-        created_at = datetime.date.today().isoformat()
-        with sqlite3.connect("data/tasks.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute(
-                """INSERT INTO tasks (id, title, description, status, date)
-            VALUES (?, ?, ?, ?, ?)""",
-                (secrets.randbelow(900000) + 100000, title, desc, status, created_at),
-            )
+        with Session(engine) as session:
+            session.add(TaskBase(title=title, description=desc))
+            session.commit()
 
     def find_task(self, task_id):
-        with sqlite3.connect("data/tasks.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute(
-                "SELECT id, title, description, status, date FROM tasks WHERE id = (?)",
-                (task_id,),
-            )
-            temp = cursor.fetchone()
-            return {
-                "id": temp[0],
-                "title": temp[1],
-                "description": temp[2],
-                "status": temp[3],
-                "date": temp[4],
-            }
+        with Session(engine) as session:
+            stmt = select(TaskBase).where(TaskBase.id == task_id)
+            stmt = session.execute(stmt).scalars().one()
+            return stmt.toDict()
 
     def delete_task(self, task_id):
         task = self.find_task(task_id)
         if task is None:
             return False
-        with sqlite3.connect("data/tasks.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute("""DELETE FROM tasks WHERE id = (?)""", (task_id,))
+
+        with Session(engine) as session:
+            temp = session.get(TaskBase, task_id)
+            session.delete(temp)
+            session.commit()
+
         return True
 
     def filter_task(self, parametr) -> list:
@@ -124,9 +100,9 @@ def sorted_list(items: list, parametr: str) -> list:
     if items is None:
         return []  # Защита от None на входе
     if parametr == "dateplus":
-        items.sort(key=lambda x: x["date"])
+        items.sort(key=lambda x: x["created_at"])
         return items
     elif parametr == "dateminus":
-        items.sort(key=lambda x: x["date"], reverse=True)
+        items.sort(key=lambda x: x["created_at"], reverse=True)
         return items
     return items
