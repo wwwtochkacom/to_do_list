@@ -21,7 +21,7 @@ class TaskBase(Base):
     status: Mapped[str] = mapped_column(String(15), default="Not complete")
     created_at: Mapped[date] = mapped_column(Date, default=date.today)
 
-    def toDict(self):
+    def to_dict(self):
         return {
             "id": self.id,
             "title": self.title,

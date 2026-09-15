@@ -26,11 +26,11 @@ class Task:
     @classmethod
     def from_dict(cls, data):
         return cls(
-            task_id=TaskBase.id,
-            title=TaskBase.title,
-            desc=TaskBase.description,
-            status=TaskBase.status,
-            created_at=TaskBase.created_at,
+            task_id=data.get("id"),
+            title=data.get("title"),
+            desc=data.get("description"),
+            status=data.get("status"),
+            created_at=data.get("created_at"),
         )
 
     def full_change_task(self, title, desc, status, task_id):
@@ -42,6 +42,9 @@ class Task:
 
             task.title, task.description, task.status = title, desc, status
             session.commit()
+            self.title = title
+            self.desc = desc
+            self.status = status
 
     def part_change_task(self, data, task_id):
         with Session(engine) as session:
@@ -63,7 +66,7 @@ class Task:
 class Manager:
     def __init__(self, dbtasks):
         self.dbtasks = dbtasks
-        self.tasks = [Task.from_dict(el) for el in dbtasks]
+        self.tasks = [Task.from_dict(el.to_dict()) for el in dbtasks]
 
     def add_task(self, title, desc):
         with Session(engine) as session:
@@ -72,28 +75,21 @@ class Manager:
 
     def find_task(self, task_id):
         with Session(engine) as session:
-            stmt = select(TaskBase).where(TaskBase.id == task_id)
-            stmt = session.execute(stmt).scalars().one()
-            return stmt.toDict()
+            return session.get(TaskBase, task_id)
 
     def delete_task(self, task_id):
-        task = self.find_task(task_id)
-        if task is None:
-            return False
-
         with Session(engine) as session:
             temp = session.get(TaskBase, task_id)
+            if temp is None:
+                return False
             session.delete(temp)
             session.commit()
-
         return True
 
     def filter_task(self, parametr) -> list:
-        seq = []
-        for t in self.tasks:
-            if t.status == parametr:
-                seq.append(t.to_dict())
-        return seq
+        with Session(engine) as session:
+            stmt = session.execute(select(TaskBase).where(TaskBase.status == parametr)).scalars().all()
+            return [el.to_dict() for el in stmt]
 
 
 def sorted_list(items: list, parametr: str) -> list:

@@ -25,7 +25,7 @@ def render():
     status = request.args.get("status")
     sort = request.args.get("sort")
 
-    html_list = [el.toDict() for el in tasks]
+    html_list = [el.to_dict() for el in tasks]
 
     if html_list:
         if status:
@@ -71,21 +71,17 @@ def add_task():
 # Веб-интерфейс редактирования задач
 @app.route("/todos/<int:task_id>/edit", methods=["GET", "POST"])
 def update_task(task_id):
-    task = task_manager.find_task(task_id)
-    task = Task(
-        task["title"],
-        task["description"],
-        task["status"],
-        task["created_at"],
-        task["id"],
-    )
-    if task is None:
+    task_orm = task_manager.find_task(task_id)
+
+    if task_orm is None:
         return "<h2> Не найдена задача </h2>", 404
 
     else:
-        if request.method == "GET":
+        task = Task.from_dict(task_orm.to_dict())
 
+        if request.method == "GET":
             return render_template("edit.html", task=task)
+
         else:
             data = {
                 "title": request.form["title"],
@@ -104,47 +100,35 @@ def update_task(task_id):
 # Полное редактирование задачи
 @app.route("/todos/<int:task_id>", methods=["PUT"])
 def api_put_task(task_id):
-    task = task_manager.find_task(task_id)
-    task = Task(
-        task["title"],
-        task["description"],
-        task["status"],
-        task["created_at"],
-        task["id"],
-    )
-    if task is None:
+    task_orm = task_manager.find_task(task_id)
+
+    if task_orm is None:
         return "<h2> Не найдена задача </h2>", 404
-    else:
-        data = request.get_json()
-        if validate_put(data) is None:
-            return "<h2> Не правильный ввод данных </h2>", 404
-        else:
-            task.full_change_task(
-                data["title"], data["description"], data["status"], task_id
-            )
-            return task.to_dict()
+
+    data = request.get_json()
+    if validate_put(data) is None:
+        return "<h2> Не правильный ввод данных </h2>", 404
+
+    task = Task.from_dict(task_orm.to_dict())
+    task.full_change_task(data["title"], data["description"], data["status"], task_id)
+    return task.to_dict()
 
 
 # Частичное редактирование задачи
 @app.route("/todos/<int:task_id>", methods=["PATCH"])
 def api_patch_task(task_id):
-    task = task_manager.find_task(task_id)
-    task = Task(
-        task["title"],
-        task["description"],
-        task["status"],
-        task["created_at"],
-        task["id"],
-    )
-    if task is None:
+    task_orm = task_manager.find_task(task_id)
+
+    if task_orm is None:
         return "<h2> Не найдена задача </h2>", 404
-    else:
-        data = request.get_json()
-        if validate_patch(data) is None:
-            return "<h2> Не правильный ввод данных </h2>", 404
-        else:
-            task.part_change_task(data, task_id)
-            return task.to_dict()
+
+    data = request.get_json()
+    if validate_patch(data) is None:
+        return "<h2> Не правильный ввод данных </h2>", 404
+
+    task = Task.from_dict(task_orm.to_dict())
+    task.part_change_task(data, task_id)
+    return task.to_dict()
 
 
 # Удаление задачи
@@ -152,8 +136,8 @@ def api_patch_task(task_id):
 def delete_task(task_id):
     if task_manager.delete_task(task_id) is False:
         return "<h2> Задача не найдена </h2>", 404
-    else:
-        return "success", 200
+
+    return "success", 200
 
 
 if __name__ == "__main__":

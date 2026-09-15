@@ -18,7 +18,7 @@ def migrate_json_to_db():
 
     for i in range(len(x)):
         cursor.execute(
-            """INSERT INTO tasks (id, title, description, status, date)
+            """INSERT INTO tasks (id, title, description, status, created_at)
                     VALUES (?, ?, ?, ?, ?)""",
             x[i],
         )
